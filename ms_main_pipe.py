@@ -91,6 +91,8 @@ def model_infer(model_dir,content="今天的天气真不错",output_wav="output.
     output_data = np.frombuffer(output["output_wav"], dtype=np.int16)
     write(output_wav, 16000, output_data)
 
+    # return output_data.tolist()
+
 if __name__ == "__main__":
     input_wav = "data/speech_clone/janchen"
     output_data = "data/speech_clone/janchen_label"
