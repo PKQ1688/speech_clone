@@ -7,8 +7,8 @@ from loguru import logger
 from audio_utils import ndarray_to_wav
 
 # import ssl
-model_list = os.listdir("model/speech_clone")
-logger.info(model_list)
+# model_list = os.listdir("model/speech_clone")
+# logger.info(model_list)
 
 
 def upload_records(record, index, cur_workspace: str):
@@ -184,6 +184,10 @@ with gr.Blocks(css="#warning {color: red} .feedback {font-size: 24px}") as demo:
                     #     value="model/speech_clone/janchen",
                     #     interactive=False,
                     # )
+
+                    model_list = os.listdir("model/speech_clone")
+                    logger.info(model_list)
+                    
                     model_name = gr.CheckboxGroup(choices=model_list)
                     # out_wav_file_path = gr.Textbox(
                     #     label="输出文件路径", value="result/output.wav", interactive=False

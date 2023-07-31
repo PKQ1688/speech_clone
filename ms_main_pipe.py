@@ -94,9 +94,9 @@ def model_infer(model_dir,content="今天的天气真不错",output_wav="output.
     # return output_data.tolist()
 
 if __name__ == "__main__":
-    input_wav = "data/speech_clone/janchen"
-    output_data = "data/speech_clone/janchen_label"
+    input_wav = "data/speech_clone/wxt"
+    output_data = "data/speech_clone/wxt_label"
     # get_label_data(input_wav, output_data)
-    usr = "model/speech_clone/janchen"
-    # train_model(output_data=output_data,user_name=usr)
-    model_infer(model_dir=usr,content="今天的天气真不错",output_wav="output.wav")
+    usr = "model/speech_clone/wxt"
+    train_model(output_data=output_data,user_name=usr)
+    # model_infer(model_dir=usr,content="今天的天气真不错",output_wav="output.wav")
