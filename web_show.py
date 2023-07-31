@@ -1,12 +1,14 @@
 import os
 import gradio as gr
 import numpy as np
-from use_model_api import get_data_infer
+from use_model_api import get_data_infer,get_data_label,get_data_train
 from loguru import logger
 
 from audio_utils import ndarray_to_wav
 
 # import ssl
+model_list = os.listdir("model/speech_clone")
+logger.info(model_list)
 
 
 def upload_records(record, index, cur_workspace: str):
@@ -30,34 +32,58 @@ def upload_records(record, index, cur_workspace: str):
     return 1
 
 
-def launch_training_task(model_name, *audio_lst):
+def launch_training_task(use_name, *audio_lst):
     valid_wav_entries = 0
-    wav_data_path = "data/speech_clone/" + model_name
+    wav_data_path = "data/speech_clone/" + use_name
+
+    if os.path.exists(wav_data_path):
+        os.system("rm -rf {}".format(wav_data_path))
+    os.mkdir(wav_data_path)
+
+    logger.info(wav_data_path)
 
     for num in range(len(audio_lst)):
         res = upload_records(audio_lst[num], num, wav_data_path)
         valid_wav_entries += res
 
-    if valid_wav_entries < 10:
-        return ["Error: 录音文件数量不足，请至少录制10个以上的音频文件", None, session]
+    # if valid_wav_entries < 10:
+        # return "Error: 录音文件数量不足，请至少录制10个以上的音频文件"
+    # yield "开始标注数据"
+    train_progress = "开始标注数据"
+    logger.info(train_progress)
+
+    wav_data_path_label = wav_data_path + "_label"
+    get_data_label(input_wav=wav_data_path, output_data=wav_data_path_label)
+
+    model_path = "model/speech_clone/" + use_name
+    if not os.path.exists(model_path):
+        os.mkdir(model_path)
+
+    get_data_train(output_data=wav_data_path_label, model_name=model_path)
 
 
-def launch_infer_task(model_name, content, output_wav_path):
+def launch_infer_task(model_name, content):
+    logger.info(model_name)
+    output_wav_path = "result/" + model_name[0]
+    logger.info(output_wav_path)
+    if not os.path.exists(output_wav_path):
+        os.mkdir(output_wav_path)
+
     logger.info("开始推理")
     logger.info("模型路径:{}".format(model_name))
     logger.info("推理文本:{}".format(content))
     logger.info("输出音频路径:{}".format(output_wav_path))
 
     get_data_infer(
-        model_name=model_name, content=content, output_wav_path=output_wav_path
+        model_name="model/speech_clone/"+model_name[0], content=content, output_wav_path=output_wav_path+"/output.wav"
     )
     # wav_res = np.array(output_wav)
 
-    return output_wav_path
+    return output_wav_path+"/output.wav"
 
 
 with gr.Blocks(css="#warning {color: red} .feedback {font-size: 24px}") as demo:
-    gr.Markdown("## 灵动树上声音克隆")
+    gr.Markdown("## 灵动数上声音克隆")
     voice: str = ""
     # model_list = PRETRAINED_MODEL_ID
     my_models = []
@@ -79,9 +105,11 @@ with gr.Blocks(css="#warning {color: red} .feedback {font-size: 24px}") as demo:
 
             Step 1. 录制音频\N{microphone}，点击下方音频录制并朗读左上角文字, 请至少录制10句话
 
-            Step 2. 点击 **[开始训练]** \N{hourglass with flowing sand}，启动模型训练，等待约10分钟
+            Step 2. 输入声音的名字作为唯一标识
 
-            Step 3. 切换至 **[模型体验]** \N{speaker with three sound waves}，选择训练好的模型，感受效果
+            Step 3. 点击 **[开始训练]** \N{hourglass with flowing sand}，启动模型训练，等待约20分钟
+
+            Step 4. 切换至 **[模型体验]** \N{speaker with three sound waves}，选择训练好的模型，感受效果
 
             \N{electric light bulb}**友情提示**\N{electric light bulb}
 
@@ -140,7 +168,7 @@ with gr.Blocks(css="#warning {color: red} .feedback {font-size: 24px}") as demo:
                 label="训练进度", value="当前无训练任务", interactive=False
             )
             with gr.Row():
-                model_name = gr.Textbox(label="请输入你的名字", value="", interactive=True)
+                use_name = gr.Textbox(label="请输入克隆声音的名字(英文小写)", value="test", interactive=True)
                 training_button = gr.Button("开始训练")
 
         with gr.TabItem("\N{party popper}模型体验") as tab_infer:
@@ -151,14 +179,15 @@ with gr.Blocks(css="#warning {color: red} .feedback {font-size: 24px}") as demo:
                     text_input = gr.Textbox(
                         label="合成内容", value="这周天气真不错, 叫上朋友一起爬山吧", max_lines=3
                     )
-                    model_name = gr.Textbox(
-                        label="模型名称",
-                        value="model/speech_clone/janchen",
-                        interactive=False,
-                    )
-                    out_wav_file_path = gr.Textbox(
-                        label="输出文件路径", value="result/output.wav", interactive=False
-                    )
+                    # model_name = gr.Textbox(
+                    #     label="模型名称",
+                    #     value="model/speech_clone/janchen",
+                    #     interactive=False,
+                    # )
+                    model_name = gr.CheckboxGroup(choices=model_list)
+                    # out_wav_file_path = gr.Textbox(
+                    #     label="输出文件路径", value="result/output.wav", interactive=False
+                    # )
                     #  hot_models = gr.Radio(label="热门模型", choices=HOT_MODELS, type="value")
                     # user_models = gr.Radio(label="模型选择", choices=HOT_MODELS, type="value", value=HOT_MODELS[0])
                     # refresh_button = gr.Button("刷新模型列表")
@@ -169,9 +198,6 @@ with gr.Blocks(css="#warning {color: red} .feedback {font-size: 24px}") as demo:
                     )
                     helper2 = gr.Markdown(
                         """
-                    \N{bell}**温馨提示**:
-                    点击 **[刷新模型列表]** 拉取已定制的模型, 首次合成会下载模型, 请耐心等待
-
                     \N{police cars revolving light}**注意**:
                     本录音由AI生成, 禁止用于非法用途
                     """
@@ -185,12 +211,12 @@ with gr.Blocks(css="#warning {color: red} .feedback {font-size: 24px}") as demo:
 
     audio_list = audio_lst1 + audio_lst2 + audio_lst3 + audio_lst4
     training_button.click(
-        launch_training_task, inputs=[model_name] + audio_list, outputs=[train_progress]
+        launch_training_task, inputs=[use_name] + audio_list, outputs=[train_progress]
     )
 
     inference_button.click(
         launch_infer_task,
-        inputs=[model_name, text_input, out_wav_file_path],
+        inputs=[model_name, text_input],
         outputs=[audio_output],
     )
 
@@ -204,7 +230,7 @@ with gr.Blocks(css="#warning {color: red} .feedback {font-size: 24px}") as demo:
 demo.queue(concurrency_count=20).launch(
     server_name="0.0.0.0",
     server_port=6006,
-    ssl_keyfile="private_key.pem",
-    ssl_certfile="certificate.pem",
-    ssl_verify=False,
+    # ssl_keyfile="private_key.pem",
+    # ssl_certfile="certificate.pem",
+    # ssl_verify=False,
 )
