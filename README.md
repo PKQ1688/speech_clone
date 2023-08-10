@@ -16,4 +16,6 @@ cd pytorch_wavelets
 pip install .
 pip install tensorboardX
 pip install bitstring
+pip uninstall typeguard
+pip install typeguard==2.13.3
 ```
