@@ -98,7 +98,7 @@ def model_infer(model_dir, content="今天的天气真不错", output_wav="outpu
 if __name__ == "__main__":
     input_wav = "data/speech_clone/diandian"
     output_data = "data/speech_clone/diandian_label"
-    get_label_data(input_wav, output_data)
+    # get_label_data(input_wav, output_data)
     usr = "model/speech_clone/diandian"
-    train_model(output_data=output_data, user_name=usr)
-    # model_infer(model_dir=usr,content="今天的天气真不错",output_wav="output.wav")
+    # train_model(output_data=output_data, user_name=usr)
+    model_infer(model_dir=usr,content="8月10日，《每日经济新闻》记者来到湖北黄石，实地探访了处于漩涡中的黄石市鸿泰公共巴士有限公司（以下简称黄石鸿泰）。记者在该公司的停车场看到，烈日之下，数十辆停止运营的公交车旁边荒草丛生，车内积满了灰尘。",output_wav="output.wav")
